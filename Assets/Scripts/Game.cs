@@ -11,22 +11,13 @@ public class GameBootstrap : ClientServerBootstrap
     public override bool Initialize(string defaultWorldName)
     {
         AutoConnectPort = 0;
+
+        CreateLocalWorld(defaultWorldName);
         
-        // var world = new World(defaultWorldName);
-        // World.DefaultGameObjectInjectionWorld = world;
-        //
-        // ScriptBehaviourUpdateOrder.AppendWorldToCurrentPlayerLoop(world);
         return true;
     }
 }
 
 public struct GoInGameRequest : IRpcCommand
 {
-}
-
-public struct CubeInput : ICommandData
-{
-    public NetworkTick Tick { get; set; }
-    public int horizontal;
-    public int vertical;
 }
