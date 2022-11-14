@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using Unity.Entities;
 using Unity.NetCode;
@@ -8,8 +9,8 @@ using Unity.Networking.Transport;
 
 public class Menu : MonoBehaviour
 {
-    public string IP = "127.0.0.1";
-    public ushort Port = 7979;
+    [SerializeField] private TMP_InputField ipField;
+    [SerializeField] private TMP_InputField portField;
     
     public void StartClientServer()
     {
@@ -18,13 +19,15 @@ public class Menu : MonoBehaviour
 
         SceneManager.LoadScene("GameScene");
 
-        NetworkEndpoint ep = NetworkEndpoint.AnyIpv4.WithPort(Port);
+        var port = ushort.Parse(portField.text);
+
+        NetworkEndpoint ep = NetworkEndpoint.AnyIpv4.WithPort(port);
         {
             using var drvQuery = server.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
             drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(ep);
         }
 
-        ep = NetworkEndpoint.LoopbackIpv4.WithPort(Port);
+        ep = NetworkEndpoint.LoopbackIpv4.WithPort(port);
         {
             using var drvQuery = client.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
             drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(client.EntityManager, ep);
@@ -38,7 +41,10 @@ public class Menu : MonoBehaviour
 
         SceneManager.LoadScene("GameScene");
 
-        var ep = NetworkEndpoint.Parse(IP, Port);
+        var ip = ipField.text;
+        var port = ushort.Parse(portField.text);
+
+        var ep = NetworkEndpoint.Parse(ip, port);
         {
             using var drvQuery = client.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
             drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(client.EntityManager, ep);

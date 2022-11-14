@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: DotsClientAndServerSettings
   m_EditorClassIdentifier: 
   NetcodeTarget: 0
-  AdditionalScriptingDefines: []
+  AdditionalScriptingDefines:
+  - FRONTEND_PLAYER_BUILD

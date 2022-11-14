@@ -14,6 +14,8 @@ public partial class SpawnZombiesSystem : SystemBase
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         var deltaTime = SystemAPI.Time.DeltaTime;
 
+        var spawnCooldown = 5f; // Hardcoded for now
+
         Entities
             .ForEach((ref ZombieSpawnerComponent spawner, in Translation trans) =>
             {
@@ -23,21 +25,23 @@ public partial class SpawnZombiesSystem : SystemBase
                 {
                     var zombie = ecb.Instantiate(spawner.Prefab);
                     ecb.AddComponent(zombie, new SpeedComponent { Value = Random.Range(1f, 4f) });
-                    ecb.AddComponent(zombie, new CurrentWaypointComponent { Value = 0 });
-
+                    
                     var waypoints = ecb.AddBuffer<WaypointBufferComponent>(zombie);
 
-                    waypoints.Length = 6;
+                    waypoints.Length = 9;
                     waypoints[0] = new WaypointBufferComponent { Position = new float2(-4, 4) };
                     waypoints[1] = new WaypointBufferComponent { Position = new float2(-4, 0) };
-                    waypoints[2] = new WaypointBufferComponent { Position = new float2(0, -4) };
-                    waypoints[3] = new WaypointBufferComponent { Position = new float2(0, 4) };
-                    waypoints[4] = new WaypointBufferComponent { Position = new float2(4, 4) };
-                    waypoints[5] = new WaypointBufferComponent { Position = new float2(4, -4) };
+                    waypoints[2] = new WaypointBufferComponent { Position = new float2(-4, -4) };
+                    waypoints[3] = new WaypointBufferComponent { Position = new float2(0, -4) };
+                    waypoints[4] = new WaypointBufferComponent { Position = new float2(0, 0) };
+                    waypoints[5] = new WaypointBufferComponent { Position = new float2(0, 4) };
+                    waypoints[6] = new WaypointBufferComponent { Position = new float2(4, 4) };
+                    waypoints[7] = new WaypointBufferComponent { Position = new float2(4, 0) };
+                    waypoints[8] = new WaypointBufferComponent { Position = new float2(4, -4) };
 
                     ecb.SetComponent(zombie, new Translation { Value = new float3(waypoints[0].Position, 0) });
 
-                    spawner.TimeTillNextSpawn = 5;
+                    spawner.TimeTillNextSpawn = spawnCooldown;
                 }
             }).Run();
 
