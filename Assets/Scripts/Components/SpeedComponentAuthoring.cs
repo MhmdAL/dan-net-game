@@ -2,19 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
+using Unity.NetCode;
 
-public struct SpeedComponent : IComponentData
+public struct SpeedData : IComponentData
 {
-    public float Value { get; set; }
+    [GhostField] public float OriginalValue { get; set; }
+    [GhostField] public float CurrentValue { get; set; }
 }
+
 
 public class SpeedComponentAuthoring : MonoBehaviour
 {
-    public class SpeedComponentBaker : Baker<SpeedComponentAuthoring>
+    public class SpeedDataBaker : Baker<SpeedComponentAuthoring>
     {
         public override void Bake(SpeedComponentAuthoring authoring)
         {
-            AddComponent(new SpeedComponent() {Value = authoring.Value});
+            AddComponent(new SpeedData() { CurrentValue = authoring.Value, OriginalValue = authoring.Value });
         }
     }
 

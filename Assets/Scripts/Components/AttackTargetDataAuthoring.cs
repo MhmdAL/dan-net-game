@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.NetCode;
 using UnityEngine;
 
 public struct AttackTargetData : IComponentData
 {
-    public Entity Value;
+    [GhostField] public Entity Value;
 }
 
 public class AttackTargetDataAuthoring : MonoBehaviour

@@ -37,12 +37,12 @@ public partial class MoveZombiesSystem : SystemBase
         Entities
             .ForEach((ref DynamicBuffer<WaypointBufferComponent> waypoints, ref FollowPathComponent followPathComponent,
                 ref Translation trans,
-                in SpeedComponent speed) =>
+                in SpeedData speed) =>
             {
                 var nextWaypoint = waypoints[followPathComponent.CurrentWaypoint + 1];
 
                 var dir = nextWaypoint.Position - trans.Value.xy;
-                var moveDir = math.normalize(dir) * speed.Value * deltaTime;
+                var moveDir = math.normalize(dir) * speed.CurrentValue * deltaTime;
 
                 trans.Value += new float3(moveDir, 0);
 

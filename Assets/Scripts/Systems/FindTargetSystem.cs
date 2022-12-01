@@ -1,64 +1,74 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Unity.Transforms;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateBefore(typeof(TimerSystem))]
 public partial class FindTargetSystem : SystemBase
 {
-    private GridPositioningSystem _gridPositioningSystem;
-
-    private NativeArray<int2> _detectionCells;
-
-    protected override void OnCreate()
+    private static NativeList<CellEntity> GetCellEntities(NativeMultiHashMap<int2, CellEntity> cellEntitiesMap,
+        NativeArray<int2> coveredCells)
     {
-        _gridPositioningSystem = World.GetExistingSystemManaged<GridPositioningSystem>();
+        var cellEntities = new NativeList<CellEntity>(Allocator.Temp);
 
-        _detectionCells = new NativeArray<int2>(9, Allocator.Persistent);
-        _detectionCells[0] = new int2(0, 0);
-        _detectionCells[1] = new int2(0, 1);
-        _detectionCells[2] = new int2(1, 1);
-        _detectionCells[3] = new int2(1, 0);
-        _detectionCells[4] = new int2(1, -1);
-        _detectionCells[5] = new int2(0, -1);
-        _detectionCells[6] = new int2(-1, -1);
-        _detectionCells[7] = new int2(-1, 0);
-        _detectionCells[8] = new int2(-1, 1);
-
-        base.OnCreate();
-    }
-
-    protected override void OnDestroy()
-    {
-        _detectionCells.Dispose();
-        
-        base.OnDestroy();
-    }
-
-    private static Entity FindNearestTarget(int2 gridPos, UnitType unitType,
-        NativeMultiHashMap<int2, CellEntity> cellEntitiesMap, NativeArray<int2> detectionCells, Unity.Mathematics.Random random)
-    {
-        NativeList<Entity> possibleTargets = new NativeList<Entity>(Allocator.Temp);
-
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < coveredCells.Length; i++)
         {
             CellEntity cellEnt;
             NativeMultiHashMapIterator<int2> iter;
 
-            if (cellEntitiesMap.TryGetFirstValue(gridPos + detectionCells[i], out cellEnt, out iter))
+            if (cellEntitiesMap.TryGetFirstValue(coveredCells[i], out cellEnt, out iter))
             {
                 do
                 {
-                    if (cellEnt.UnitType != unitType)
-                    {
-                        possibleTargets.Add(cellEnt.Entity);
-                    }
+                    cellEntities.Add(cellEnt);
                 } while (cellEntitiesMap.TryGetNextValue(out cellEnt, ref iter));
             }
         }
+
+        return cellEntities;
+    }
+
+    private static NativeList<Entity> GetPossibleTargets(float3 position, NativeList<CellEntity> cellEntities,
+        float? range, CellEntityType targetType)
+    {
+        NativeList<Entity> possibleTargets = new NativeList<Entity>(Allocator.Temp);
+
+        for (int i = 0; i < cellEntities.Length; i++)
+        {
+            var cellEnt = cellEntities[i];
+            if (cellEnt.EntityType == targetType)
+            {
+                if (range != null && math.distancesq(position, cellEnt.Position) < range * range)
+                {
+                    possibleTargets.Add(cellEnt.Entity);
+                }
+                else if (range == null)
+                {
+                    possibleTargets.Add(cellEnt.Entity);
+                }
+            }
+        }
+
+        return possibleTargets;
+    }
+
+    private static Entity FindRandomTarget(float3 position, CellEntityType unitType, float? range,
+        NativeMultiHashMap<int2, CellEntity> cellEntitiesMap, NativeArray<int2> detectionCells,
+        Unity.Mathematics.Random random)
+    {
+        var cellEntities = GetCellEntities(cellEntitiesMap, detectionCells);
+
+        var possibleTargets = GetPossibleTargets(position, cellEntities, range, unitType);
+
+        cellEntities.Dispose();
+        detectionCells.Dispose();
 
         if (possibleTargets.Length == 0)
         {
@@ -75,32 +85,92 @@ public partial class FindTargetSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        var cellEntitiesMap = _gridPositioningSystem.CellEntitiesHashMap;
-        var detectionCells = _detectionCells;
+        var cellEntitiesMap = EntityManager
+            .GetComponentData<GridPositioningGlobalData>(World.GetExistingSystem<GridPositioningSystem>())
+            .CellEntitiesHashMap;
 
         var random = new Unity.Mathematics.Random((uint)Random.Range(1, 1000000));
 
         var gridPosLookup = GetComponentLookup<GridPositionComponent>(true);
+        var translationLookup = GetComponentLookup<Translation>(true);
 
-        Entities
-            .WithReadOnly(cellEntitiesMap)
-            .WithReadOnly(detectionCells)
-            .WithReadOnly(gridPosLookup)
-            .ForEach((ref AttackTargetData attackTarget, in GridPositionComponent gridPos, in UnitTag unitTag) =>
+        new UnitFindTargetJob
+        {
+            GridPosLookup = gridPosLookup,
+            CellEntitiesMap = cellEntitiesMap,
+            Random = random
+        }.Run();
+
+        new TowerFindTargetJob
+        {
+            TranslationLookup = translationLookup,
+            CellEntitiesMap = cellEntitiesMap,
+            Random = random
+        }.Run();
+    }
+    
+    [BurstCompile]
+    [WithAny(typeof(HeroTag), typeof(ZombieTag))]
+    public partial struct UnitFindTargetJob : IJobEntity
+    {
+        [ReadOnly] public ComponentLookup<GridPositionComponent> GridPosLookup;
+        [ReadOnly] public NativeMultiHashMap<int2, CellEntity> CellEntitiesMap;
+        
+        public Unity.Mathematics.Random Random;
+        
+        private void Execute(ref AttackTargetData attackTarget, in GridPositionComponent gridPos, in UnitTag unitTag,
+            in Translation trans)
+        {
+            var coveredCells = GridUtils.GetBoundingBox(gridPos.Value, GridUtils.CellSize);
+
+            // Check if the current target still exists & is within range
+            GridPositionComponent targetPos;
+            if (GridPosLookup.TryGetComponent(attackTarget.Value, out targetPos))
             {
-                // Check if the current target still exists & is within range
-                GridPositionComponent targetPos;
-                if (gridPosLookup.TryGetComponent(attackTarget.Value, out targetPos))
+                for (int i = 0; i < coveredCells.Length; i++)
                 {
-                    for (int i = 0; i < 9; i++)
-                    {
-                        if (targetPos.Value.Equals(gridPos.Value + detectionCells[i]))
-                            return;
-                    }
+                    if (targetPos.Value.Equals(gridPos.Value + coveredCells[i]))
+                        return;
                 }
-                
-                // Otherwise find a new target
-                attackTarget.Value = FindNearestTarget(gridPos.Value, unitTag.Type, cellEntitiesMap, detectionCells, random);
-            }).Schedule();
+            }
+            
+            // Otherwise find a new target
+            var targetType = unitTag.Type == CellEntityType.Hero ? CellEntityType.Zombie : CellEntityType.Hero;
+            attackTarget.Value =
+                FindRandomTarget(trans.Value, targetType, null, CellEntitiesMap, coveredCells.ToArray(Allocator.Temp), Random);
+
+            coveredCells.Dispose();
+        }
+    }
+    
+    [BurstCompile]
+    [WithAll(typeof(TowerTag))]
+    public partial struct TowerFindTargetJob : IJobEntity
+    {
+        [ReadOnly] public ComponentLookup<Translation> TranslationLookup;
+        [ReadOnly] public NativeMultiHashMap<int2, CellEntity> CellEntitiesMap;
+        
+        public Unity.Mathematics.Random Random;
+        
+        private void Execute(ref AttackTargetData attackTarget, in GridPositionComponent gridPos, in Translation trans,
+            in AttackRangeData attackRange)
+        {
+            // Check if the current target still exists & is within range
+            Translation targetPos;
+            if (TranslationLookup.TryGetComponent(attackTarget.Value, out targetPos))
+            {
+                if (math.distancesq(targetPos.Value, trans.Value) < attackRange.Value * attackRange.Value)
+                    return;
+            }
+        
+            var coveredCells = GridUtils.GetBoundingBox(gridPos.Value, attackRange.Value);
+        
+            // Otherwise find a new target
+            attackTarget.Value = FindRandomTarget(trans.Value, CellEntityType.Zombie, attackRange.Value,
+                CellEntitiesMap,
+                coveredCells.ToArray(Allocator.Temp), Random);
+        
+            coveredCells.Dispose();
+        }
     }
 }

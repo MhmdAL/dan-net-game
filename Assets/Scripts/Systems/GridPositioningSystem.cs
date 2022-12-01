@@ -5,34 +5,45 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using Unity.Burst;
+
+public struct GridPositioningGlobalData : IComponentData
+{
+    public NativeMultiHashMap<int2, CellEntity> CellEntitiesHashMap;
+}
 
 public partial class GridPositioningSystem : SystemBase
 {
-    public NativeMultiHashMap<int2, CellEntity> CellEntitiesHashMap;
-    
     protected override void OnCreate()
     {
-        CellEntitiesHashMap = new NativeMultiHashMap<int2, CellEntity>(0, Allocator.Persistent);
+        EntityManager.AddComponent<GridPositioningGlobalData>(SystemHandle);
+        EntityManager.SetComponentData(SystemHandle,
+            new GridPositioningGlobalData
+                { CellEntitiesHashMap = new NativeMultiHashMap<int2, CellEntity>(0, Allocator.Persistent) });
+
         base.OnCreate();
     }
 
     protected override void OnDestroy()
     {
-        CellEntitiesHashMap.Dispose();
+        var state = EntityManager.GetComponentData<GridPositioningGlobalData>(SystemHandle);
+
+        state.CellEntitiesHashMap.Dispose();
+
         base.OnDestroy();
     }
 
-    private int GetEntityCountInQuadrant(int2 pos)
+    private int GetEntityCountInQuadrant(NativeMultiHashMap<int2, CellEntity> cellHashMap, int2 pos)
     {
         CellEntity ent;
         NativeMultiHashMapIterator<int2> iter;
         int count = 0;
-        if (CellEntitiesHashMap.TryGetFirstValue(pos, out ent, out iter))
+        if (cellHashMap.TryGetFirstValue(pos, out ent, out iter))
         {
             do
             {
                 count++;
-            } while (CellEntitiesHashMap.TryGetNextValue(out ent, ref iter));
+            } while (cellHashMap.TryGetNextValue(out ent, ref iter));
         }
 
         return count;
@@ -40,44 +51,71 @@ public partial class GridPositioningSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        CellEntitiesHashMap.Clear();
+        var state = EntityManager.GetComponentData<GridPositioningGlobalData>(SystemHandle);
 
-        var query = GetEntityQuery(typeof(Translation), typeof(HealthComponent));
+        state.CellEntitiesHashMap.Clear();
+
+        var query = GetEntityQuery(typeof(Translation), typeof(GridPositionComponent));
 
         var entityCount = query.CalculateEntityCount();
 
-        if (entityCount > CellEntitiesHashMap.Capacity)
+        if (entityCount > state.CellEntitiesHashMap.Capacity)
         {
-            CellEntitiesHashMap.Capacity = entityCount + 10;
+            state.CellEntitiesHashMap.Capacity = entityCount + 10;
         }
 
-        Entities
-            .ForEach((Entity ent, ref GridPositionComponent gridPosition, in Translation trans, in UnitTag unitTag) =>
-            {
-                gridPosition.Value = Utils.GetQuadrant(trans.Value.xy);
-                
-                CellEntitiesHashMap.Add(gridPosition.Value, new CellEntity { Entity = ent, UnitType = unitTag.Type });
-            }).WithoutBurst().Run(); }
+        new SetGridPositionsJob { CellEntitiesHashMap = state.CellEntitiesHashMap }.Schedule();
+    }
+}
+
+[BurstCompile]
+public partial struct SetGridPositionsJob : IJobEntity
+{
+    public NativeMultiHashMap<int2, CellEntity> CellEntitiesHashMap;
+
+    private void Execute(Entity ent, ref GridPositionComponent gridPos, in Translation trans)
+    {
+        gridPos.Value = GridUtils.GetCell(trans.Value.xy);
+
+        CellEntitiesHashMap.Add(gridPos.Value, new CellEntity { Entity = ent, EntityType = gridPos.EntityType, Position = trans.Value});
+    }
 }
 
 public struct CellEntity
 {
     public Entity Entity;
-    public UnitType UnitType;
+    public CellEntityType EntityType;
+    public float3 Position;
 }
 
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 public partial class DebugGridSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        Entities
-            .ForEach((Entity ent, in GridPositionComponent gridPosition) =>
-            {
-                Utils.DrawQuadrant(gridPosition.Value);
-            }).Run();
+        foreach (var (gridPosition, ent) in SystemAPI.Query<GridPositionComponent>().WithEntityAccess())
+        {
+            GridUtils.DrawCell(gridPosition.Value);
+        }
 
         var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        var mouseGridPos = Utils.GetQuadrant(mousePos);
-        Utils.DrawQuadrant(mouseGridPos, Color.green);
+        var mouseGridPos = GridUtils.GetCell(mousePos);
+        GridUtils.DrawCell(mouseGridPos, Color.green);
+
+        Entities
+            .WithAll<TowerTag>()
+            .ForEach((ref AttackTargetData attackTarget, in GridPositionComponent gridPos, in AttackRangeData attackRange, in Translation trans) =>
+            {
+                GridUtils.DrawCircle(trans.Value, attackRange.Value, 100, Color.cyan);
+
+                if (Exists(attackTarget.Value))
+                    return;
+                
+                // var coveredCells = GridUtils.GetBoundingBox(gridPos.Value, attackRange.Value);
+                //
+                // GridUtils.DrawCells(coveredCells);
+                //
+                // coveredCells.Dispose();
+            }).Run();
     }
 }

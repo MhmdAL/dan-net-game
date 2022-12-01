@@ -37,6 +37,8 @@ public partial struct MoveHeroSystem : ISystem
             deltaTime = SystemAPI.Time.DeltaTime
         };
         state.Dependency = moveJob.ScheduleParallel(state.Dependency);
+        
+        state.Dependency.Complete();
     }
 
     [BurstCompile]
@@ -44,10 +46,10 @@ public partial struct MoveHeroSystem : ISystem
     partial struct MoveHeroJob : IJobEntity
     {
         public float deltaTime;
-        public void Execute(HeroInput playerInput, ref Translation trans, in SpeedComponent speed)
+        public void Execute(HeroInput playerInput, ref Translation trans, in SpeedData speed)
         {
             var moveInput = new float2(playerInput.Horizontal, playerInput.Vertical);
-            moveInput = math.normalizesafe(moveInput) * speed.Value * deltaTime;
+            moveInput = math.normalizesafe(moveInput) * speed.CurrentValue * deltaTime;
             trans.Value += new float3(moveInput.x, moveInput.y, 0);
         }
     }

@@ -5,13 +5,14 @@ using UnityEngine;
 
 public struct UnitTag : IComponentData
 {
-    public UnitType Type;
+    public CellEntityType Type;
 }
 
-public enum UnitType
+public enum CellEntityType
 {
     Hero,
-    Zombie
+    Zombie,
+    Tower
 }
 
 public class UnitTagAuthoring : MonoBehaviour
@@ -24,5 +25,5 @@ public class UnitTagAuthoring : MonoBehaviour
         }
     }
 
-    public UnitType Type;
+    public CellEntityType Type;
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 
 public struct GridPositionComponent : IComponentData
 {
+    public CellEntityType EntityType;
     public int2 Value;
 }
 
@@ -15,7 +16,9 @@ public class GridPositionComponentAuthoring : MonoBehaviour
     {
         public override void Bake(GridPositionComponentAuthoring authoring)
         {
-            AddComponent(new GridPositionComponent {  });
+            AddComponent(new GridPositionComponent { EntityType = authoring.EntityType });
         }
     }
+
+    public CellEntityType EntityType;
 }

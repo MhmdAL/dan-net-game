@@ -5,6 +5,8 @@ using Unity.Entities;
 using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateAfter(typeof(AttackSystem))]
+[UpdateAfter(typeof(EffectSystem))]
 public partial class UnitDamageSystem : SystemBase
 {
     protected override void OnUpdate()
