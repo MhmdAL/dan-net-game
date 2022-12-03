@@ -10,7 +10,7 @@ using Random = UnityEngine.Random;
 using Unity.Transforms;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-[UpdateBefore(typeof(TimerSystem))]
+[UpdateBefore(typeof(AttackSystem))]
 public partial class FindTargetSystem : SystemBase
 {
     private static NativeList<CellEntity> GetCellEntities(NativeMultiHashMap<int2, CellEntity> cellEntitiesMap,
@@ -99,14 +99,14 @@ public partial class FindTargetSystem : SystemBase
             GridPosLookup = gridPosLookup,
             CellEntitiesMap = cellEntitiesMap,
             Random = random
-        }.Run();
+        }.Schedule();
 
         new TowerFindTargetJob
         {
             TranslationLookup = translationLookup,
             CellEntitiesMap = cellEntitiesMap,
             Random = random
-        }.Run();
+        }.Schedule();
     }
     
     [BurstCompile]

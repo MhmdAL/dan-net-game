@@ -33,18 +33,6 @@ public partial class EffectSystem : SystemBase
 
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
         
-        Entities
-            .ForEach((Entity ent, ref DynamicBuffer<EffectBufferComponent> effectBuffer, in ApplyEffect applyEffect) =>
-            {
-                effectBuffer.Add(applyEffect.Effect);
-                
-                ecb.RemoveComponent<ApplyEffect>(ent);
-            }).Run();
-        
-        ecb.Playback(EntityManager);
-
-        ecb = new EntityCommandBuffer(Allocator.TempJob);
-
         new CalculateEffectsJob
         {
             ecb = ecb,

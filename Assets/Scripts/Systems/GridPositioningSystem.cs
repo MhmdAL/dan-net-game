@@ -12,6 +12,7 @@ public struct GridPositioningGlobalData : IComponentData
     public NativeMultiHashMap<int2, CellEntity> CellEntitiesHashMap;
 }
 
+[UpdateAfter(typeof(MoveZombiesSystem))]
 public partial class GridPositioningSystem : SystemBase
 {
     protected override void OnCreate()

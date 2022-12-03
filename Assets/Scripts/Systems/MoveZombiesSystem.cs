@@ -4,6 +4,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateBefore(typeof(FindTargetSystem))]
 public partial class MoveZombiesSystem : SystemBase
 {
     protected override void OnCreate()
