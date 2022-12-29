@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.NetCode;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public struct FollowPathComponent : IComponentData, IEnableableComponent
 {
-    public int CurrentWaypoint { get; set; }
+    public byte CurrentWaypoint { get; set; }
 }
 
 public class FollowPathAuthoring : MonoBehaviour

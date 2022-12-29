@@ -17,6 +17,8 @@ public class GameSceneMenu : MonoBehaviour
     [SerializeField] private TextMeshProUGUI heroTitleText;
     [SerializeField] private TextMeshProUGUI zombieTitleText;
     [SerializeField] private TextMeshProUGUI towerTitleText;
+    
+    [SerializeField] private TextMeshProUGUI connectionsText;
 
     [SerializeField] private TMP_InputField heroSpeedInput;
     [SerializeField] private TMP_InputField heroHealthInput;
@@ -47,6 +49,8 @@ public class GameSceneMenu : MonoBehaviour
 
     private EntityQuery _effectsDataQuery;
     private EntityQuery _modifiersDataQuery;
+
+    private EntityQuery _connectionsQuery;
 
     private World _serverWorld;
 
@@ -87,9 +91,13 @@ public class GameSceneMenu : MonoBehaviour
             var zombieCount = _zombieQuery.CalculateEntityCount();
             var towerCount = _towerQuery.CalculateEntityCount();
 
+            var connectionCount = _connectionsQuery.CalculateEntityCount();
+
             heroTitleText.text = $"Hero ({heroCount})";
             zombieTitleText.text = $"Zombie ({zombieCount})";
             towerTitleText.text = $"Tower ({towerCount})";
+
+            connectionsText.text = $"Connections ({connectionCount})";
         }
     }
 
@@ -146,6 +154,10 @@ public class GameSceneMenu : MonoBehaviour
         _modifiersDataQuery = new EntityQueryBuilder(Allocator.Persistent)
             .WithAll<ModifiersData>()
             .WithOptions(EntityQueryOptions.IncludeSystems)
+            .Build(_serverWorld.EntityManager);
+
+        _connectionsQuery = new EntityQueryBuilder(Allocator.Persistent)
+            .WithAll<NetworkStreamInGame>()
             .Build(_serverWorld.EntityManager);
 
         InitFields();
@@ -217,11 +229,11 @@ public class GameSceneMenu : MonoBehaviour
         // Stacks
 
         var effectsData = _effectsDataQuery.ToComponentDataArray<EffectsData>(Allocator.Temp)[0];
-
+        
         fireStacksInput.text = effectsData.MaxStacksMap[(int)EffectType.FireDoT].ToString();
         
         var modifiersData = _modifiersDataQuery.ToComponentDataArray<ModifiersData>(Allocator.Temp)[0];
-
+        
         slowStacksInput.text = modifiersData.MaxStacksMap[(int)ModifierType.Slow].ToString();
     }
 
@@ -298,26 +310,26 @@ public class GameSceneMenu : MonoBehaviour
         // Stacks
 
         var effectsData = _effectsDataQuery.ToComponentDataArray<EffectsData>(Allocator.Temp)[0];
-
+        
         var effectsStacksMap = effectsData.MaxStacksMap;
-
+        
         if (int.TryParse(fireStacksInput.text, out var fireStacks))
         {
             effectsStacksMap[(int)EffectType.FireDoT] = fireStacks;
         }
-
+        
         _serverWorld.EntityManager.SetComponentData(_serverWorld.GetExistingSystem(typeof(EffectSystem)),
             new EffectsData() { MaxStacksMap = effectsStacksMap });
-
+        
         var modifiersData = _modifiersDataQuery.ToComponentDataArray<ModifiersData>(Allocator.Temp)[0];
-
+        
         var modifierStacksMap = modifiersData.MaxStacksMap;
-
+        
         if (int.TryParse(slowStacksInput.text, out var slowStacks))
         {
             modifierStacksMap[(int)ModifierType.Slow] = slowStacks;
         }
-
+        
         _serverWorld.EntityManager.SetComponentData(_serverWorld.GetExistingSystem(typeof(ModifierSystem)),
             new ModifiersData() { MaxStacksMap = modifierStacksMap });
 

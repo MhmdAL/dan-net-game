@@ -217,5 +217,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Duration: 200
-  MinSlow: 0.1
+  MinSlow: 0.5
   MaxSlow: 0.5

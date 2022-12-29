@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3310525516394447897}
   - component: {fileID: 7942515145814249582}
   - component: {fileID: 465620222603068923}
-  - component: {fileID: 376490882425686239}
   - component: {fileID: 7520057994878198098}
   - component: {fileID: 64295382580747320}
   - component: {fileID: 3155153159698480038}
@@ -24,6 +23,9 @@ GameObject:
   - component: {fileID: -6295224828595000419}
   - component: {fileID: 5020829867470088203}
   - component: {fileID: 5513965463822472670}
+  - component: {fileID: -5476066285319296175}
+  - component: {fileID: -8823285454978815174}
+  - component: {fileID: 4522925652927955995}
   m_Layer: 0
   m_Name: Zombie
   m_TagString: Untagged
@@ -39,7 +41,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5057266223335924515}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -8, y: 4, z: 0}
   m_LocalScale: {x: 0.75, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -110,28 +112,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &376490882425686239
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5057266223335924515}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DefaultGhostMode: 0
-  SupportedGhostModes: 1
-  OptimizationMode: 0
-  Importance: 1
-  prefabId: 54271aec49a51e64c9dedb72b7d34e92
-  HasOwner: 0
-  SupportAutoCommandTarget: 1
-  TrackInterpolationDelay: 0
-  GhostGroup: 0
-  UsePreSerialization: 0
 --- !u!114 &7520057994878198098
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7507734a2ec6e654696e7c97d096568d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Value: 0.5
+  Value: 5
 --- !u!114 &5513965463822472670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -287,36 +267,111 @@ MonoBehaviour:
   - x: -8
     y: 4
   - x: -8
+    y: 0
+  - x: -8
     y: -4
   - x: -6
     y: -4
+  - x: -6
+    y: 0
   - x: -6
     y: 4
   - x: -4
     y: 4
   - x: -4
+    y: 0
+  - x: -4
     y: -4
   - x: -2
     y: -4
+  - x: -2
+    y: 0
   - x: -2
     y: 4
   - x: 0
     y: 4
   - x: 0
+    y: 0
+  - x: 0
     y: -4
   - x: 2
     y: -4
+  - x: 2
+    y: 0
   - x: 2
     y: 4
   - x: 4
     y: 4
   - x: 4
+    y: 0
+  - x: 4
     y: -4
   - x: 6
     y: -4
+  - x: 6
+    y: 0
   - x: 6
     y: 4
   - x: 8
     y: 4
   - x: 8
+    y: 0
+  - x: 8
     y: -4
+--- !u!114 &-5476066285319296175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5057266223335924515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DefaultGhostMode: 0
+  SupportedGhostModes: 3
+  OptimizationMode: 1
+  Importance: 10
+  prefabId: 54271aec49a51e64c9dedb72b7d34e92
+  HasOwner: 0
+  SupportAutoCommandTarget: 1
+  TrackInterpolationDelay: 0
+  GhostGroup: 0
+  UsePreSerialization: 0
+--- !u!114 &-8823285454978815174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5057266223335924515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfdaa6c06fe64fbda2b16e07a4ee0b25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ComponentOverrides:
+  - FullTypeName: Unity.Transforms.Rotation
+    GameObject: {fileID: 5057266223335924515}
+    PrefabType: -1
+    SendTypeOptimization: -1
+    VariantHash: 10188360468653526834
+  - FullTypeName: Unity.Transforms.Translation
+    GameObject: {fileID: 5057266223335924515}
+    PrefabType: 7
+    SendTypeOptimization: -1
+    VariantHash: 10188360468653526834
+--- !u!114 &4522925652927955995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5057266223335924515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde5f41ee0b14fb4af38e07d5246e37b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

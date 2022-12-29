@@ -89,7 +89,8 @@ public partial class FindTargetSystem : SystemBase
             .GetComponentData<GridPositioningGlobalData>(World.GetExistingSystem<GridPositioningSystem>())
             .CellEntitiesHashMap;
 
-        var random = new Unity.Mathematics.Random((uint)Random.Range(1, 1000000));
+        // var random = new Unity.Mathematics.Random((uint)Random.Range(1, 1000000));
+        var random = new Unity.Mathematics.Random(1000);
 
         var gridPosLookup = GetComponentLookup<GridPositionComponent>(true);
         var translationLookup = GetComponentLookup<Translation>(true);

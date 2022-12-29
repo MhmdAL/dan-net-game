@@ -6,10 +6,10 @@ using UnityEngine;
 
 public struct AttackData : IComponentData
 {
-    [GhostField] public int Damage;
-    [GhostField] public float MaxCooldown;
-    [GhostField] public float CurrentCooldown;
-    [GhostField] public float HitChance;
+    public int Damage;
+    public float MaxCooldown;
+    public float CurrentCooldown;
+    public float HitChance;
 }
 
 public class AttackDataAuthoring : MonoBehaviour

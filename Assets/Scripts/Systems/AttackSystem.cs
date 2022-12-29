@@ -19,7 +19,8 @@ public partial class AttackSystem : SystemBase
         var effectBufferLookup = GetBufferLookup<EffectBufferComponent>();
         var modBufferLookup = GetBufferLookup<ModifierBufferComponent>();
 
-        var random = new Random((uint)UnityEngine.Random.Range(1, 1000000));
+        // var random = new Random((uint)UnityEngine.Random.Range(1, 1000000));
+        var random = new Random(1000);
 
         Entities
             .WithAll<PerformAttack>()
@@ -30,7 +31,7 @@ public partial class AttackSystem : SystemBase
                     damageBuffer.Add(new DamageBuffer { Value = attackData.Damage });
                 }
             }).Run();
-
+        
         Entities
             .WithAll<PerformAttack>()
             .ForEach((Entity ent, in AttackTargetData attackTarget, in ApplyFireEffectOnAttack fireEffect) =>
@@ -38,7 +39,7 @@ public partial class AttackSystem : SystemBase
                 if (effectBufferLookup.TryGetBuffer(attackTarget.Value, out var effectBuffer))
                 {
                     var damage = random.NextInt(fireEffect.MinDamage, fireEffect.MaxDamage + 1);
-
+        
                     effectBuffer.Add(new EffectBufferComponent()
                     {
                         Duration = fireEffect.Duration,
@@ -50,7 +51,7 @@ public partial class AttackSystem : SystemBase
                     });
                 }
             }).Run();
-
+        
         Entities
             .WithAll<PerformAttack>()
             .ForEach((Entity ent, in AttackTargetData attackTarget, in ApplySlowOnAttack slowMod) =>
@@ -58,7 +59,7 @@ public partial class AttackSystem : SystemBase
                 if (modBufferLookup.TryGetBuffer(attackTarget.Value, out var modBuffer))
                 {
                     var slow = random.NextFloat(slowMod.MinSlow, slowMod.MaxSlow);
-
+        
                     modBuffer.Add(new ModifierBufferComponent
                     {
                         Duration = slowMod.Duration,
@@ -68,12 +69,14 @@ public partial class AttackSystem : SystemBase
                     });
                 }
             }).Run();
-
-        foreach (var (perf, ent) in SystemAPI.Query<PerformAttack>().WithEntityAccess())
-        {
-            ecb.RemoveComponent<PerformAttack>(ent);
-        }
-
+        
+        Entities
+            .WithAll<PerformAttack>()
+            .ForEach((Entity ent) =>
+            {
+                ecb.RemoveComponent<PerformAttack>(ent);
+            }).Run();
+        
         ecb.Playback(EntityManager);
     }
 }

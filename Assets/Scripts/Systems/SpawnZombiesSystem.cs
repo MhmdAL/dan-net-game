@@ -24,7 +24,7 @@ public partial class SpawnZombiesSystem : SystemBase
                 if (spawner.TimeTillNextSpawn <= 0)
                 {
                     var zombie = ecb.Instantiate(spawner.Prefab);
-                    var speed = Random.Range(1f, 4f);
+                    var speed = 5;
 
                     ecb.AddComponent(zombie, new SpeedData { OriginalValue = speed, CurrentValue = speed });
 

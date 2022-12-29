@@ -14,7 +14,8 @@ public partial class TimerSystem : SystemBase
     protected override void OnUpdate()
     {
         var dt = SystemAPI.Time.DeltaTime;
-        var random = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(0, 100000));
+        // var random = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(0, 100000));
+        var random = new Unity.Mathematics.Random(1000);
 
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
 

@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
+using Unity.Transforms;
 using UnityEngine;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
@@ -21,7 +23,14 @@ public partial class SpriteBugFixSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        EntityManager.RemoveComponent(_players, typeof(CompanionLink));
-        EntityManager.RemoveComponent<SpriteRenderer>(_sprites);
+        // EntityManager.RemoveComponent(_players, typeof(CompanionLink));
+        // EntityManager.RemoveComponent<SpriteRenderer>(_sprites);
+
+        Entities
+            .WithAll<ZombieTag>()
+            .ForEach((SpriteRenderer sr) =>
+            {
+                sr.color = Color.black;
+            }).WithoutBurst().Run();
     }
 }
