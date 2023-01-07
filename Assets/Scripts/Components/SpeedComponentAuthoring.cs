@@ -7,7 +7,7 @@ using Unity.NetCode;
 public struct SpeedData : IComponentData
 {
     public float OriginalValue { get; set; }
-    public float CurrentValue { get; set; }
+    [GhostField(Quantization = 1000)] public float CurrentValue { get; set; }
 }
 
 
