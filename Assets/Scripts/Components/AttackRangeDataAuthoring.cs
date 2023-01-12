@@ -6,7 +6,7 @@ using Unity.NetCode;
 
 public struct AttackRangeData : IComponentData
 {
-    [GhostField] public float Value { get; set; }
+    public float Value { get; set; }
 }
 
 

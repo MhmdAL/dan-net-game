@@ -28,13 +28,13 @@ public partial class ModifierSystem : SystemBase
     protected override void OnUpdate()
     {
         var state = EntityManager.GetComponentData<ModifiersData>(SystemHandle);
-
+        
         var dt = SystemAPI.Time.DeltaTime;
-
-        new CalculateAndUpdateSpeedJob
+        
+        Dependency = new CalculateAndUpdateSpeedJob
         {
             maxSlowStacks = state.MaxStacksMap[(int)ModifierType.Slow]
-        }.Schedule();
+        }.ScheduleParallel(Dependency);
     }
 
     public partial struct CalculateAndUpdateSpeedJob : IJobEntity

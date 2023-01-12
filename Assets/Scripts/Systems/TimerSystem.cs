@@ -16,56 +16,63 @@ public partial class TimerSystem : SystemBase
         var dt = SystemAPI.Time.DeltaTime;
         // var random = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(0, 100000));
         var random = new Unity.Mathematics.Random(1000);
-
+        
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
-
-        new UpdateAttackTimersJob
+        var ecbParallel = ecb.AsParallelWriter();
+        
+        Dependency = new UpdateAttackTimersJob
         {
             dt = dt,
-            ecb = ecb,
+            ecb = ecbParallel,
             random = random,
             exists = GetComponentLookup<Translation>(true)
-        }.Run();
+        }.ScheduleParallel(Dependency);
+        
+        Dependency = new UpdateEffectsTimersJob
+        {
+            dt = dt
+        }.ScheduleParallel(Dependency);
+        
+        Dependency = new UpdateModifiersTimersJob
+        {
+            dt = dt
+        }.ScheduleParallel(Dependency);
+        
+        Dependency.Complete();
         
         ecb.Playback(EntityManager);
-
-        new UpdateEffectsTimersJob
-        {
-            dt = dt
-        }.Run();
-        
-        new UpdateModifiersTimersJob
-        {
-            dt = dt
-        }.Run();
     }
-    
+
     [BurstCompile]
     public partial struct UpdateAttackTimersJob : IJobEntity
     {
         public float dt;
         [ReadOnly] public ComponentLookup<Translation> exists;
         public Unity.Mathematics.Random random;
-        public EntityCommandBuffer ecb;
+        public EntityCommandBuffer.ParallelWriter ecb;
 
-        private void Execute(Entity ent, ref AttackData attackData, in AttackTargetData attackTarget)
+        private void Execute(Entity ent, [EntityInQueryIndex] int entityInQueryIndex, ref AttackData attackData,
+            in AttackTargetData attackTarget)
         {
             attackData.CurrentCooldown -= dt;
-            
+
             if (attackData.CurrentCooldown <= 0)
             {
-                var rand = random.NextFloat(0, 1f);
-
-                if (rand <= attackData.HitChance && exists.HasComponent(attackTarget.Value))
+                if (exists.HasComponent(attackTarget.Value))
                 {
-                    ecb.AddComponent(ent, new PerformAttack { Target = attackTarget.Value });
+                    var rand = random.NextFloat(0, 1f);
+
+                    if (rand <= attackData.HitChance)
+                    {
+                        ecb.AddComponent(entityInQueryIndex, ent, new PerformAttack { Target = attackTarget.Value });
+                    }
                 }
 
                 attackData.CurrentCooldown += attackData.MaxCooldown;
             }
         }
     }
-    
+
     [BurstCompile]
     public partial struct UpdateEffectsTimersJob : IJobEntity
     {
@@ -88,7 +95,7 @@ public partial class TimerSystem : SystemBase
                 }
             }
 
-            for (int i = 0; i < toBeRemoved.Length; i++)
+            for (int i = toBeRemoved.Length - 1; i >= 0; i--)
             {
                 effectBuffer.RemoveAtSwapBack(toBeRemoved[i]);
             }
@@ -96,7 +103,7 @@ public partial class TimerSystem : SystemBase
             toBeRemoved.Dispose();
         }
     }
-    
+
     [BurstCompile]
     public partial struct UpdateModifiersTimersJob : IJobEntity
     {
@@ -118,7 +125,7 @@ public partial class TimerSystem : SystemBase
                 }
             }
 
-            for (int i = 0; i < toBeRemoved.Length; i++)
+            for (int i = toBeRemoved.Length - 1; i >= 0; i--)
             {
                 modBuffer.RemoveAtSwapBack(toBeRemoved[i]);
             }

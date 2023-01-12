@@ -37,8 +37,6 @@ public partial struct MoveHeroSystem : ISystem
             deltaTime = SystemAPI.Time.DeltaTime
         };
         state.Dependency = moveJob.ScheduleParallel(state.Dependency);
-        
-        state.Dependency.Complete();
     }
 
     [BurstCompile]

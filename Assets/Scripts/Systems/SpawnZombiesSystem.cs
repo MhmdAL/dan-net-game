@@ -7,23 +7,26 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 public partial class SpawnZombiesSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
-        var deltaTime = SystemAPI.Time.DeltaTime;
+        // var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var deltaTime = SystemAPI.Time.fixedDeltaTime;
 
         var waypointBufferLookup = GetBufferLookup<WaypointBufferComponent>();
         
         Entities
-            .ForEach((ref ZombieSpawnerComponent spawner, in Translation trans) =>
+            .WithDeferredPlaybackSystem<EndSimulationEntityCommandBufferSystem>()
+            .ForEach((EntityCommandBuffer ecb, ref ZombieSpawnerComponent spawner, in Translation trans) =>
             {
                 spawner.TimeTillNextSpawn -= deltaTime;
 
                 if (spawner.TimeTillNextSpawn <= 0)
                 {
                     var zombie = ecb.Instantiate(spawner.Prefab);
+                    
                     var speed = 5;
 
                     ecb.AddComponent(zombie, new SpeedData { OriginalValue = speed, CurrentValue = speed });
@@ -35,8 +38,8 @@ public partial class SpawnZombiesSystem : SystemBase
 
                     spawner.TimeTillNextSpawn = spawner.SpawnCooldown;
                 }
-            }).Run();
+            }).Schedule();
 
-        ecb.Playback(EntityManager);
+        // ecb.Playback(EntityManager);
     }
 }

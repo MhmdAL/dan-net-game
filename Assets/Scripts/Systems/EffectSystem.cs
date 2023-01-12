@@ -30,7 +30,7 @@ public partial class EffectSystem : SystemBase
     protected override void OnUpdate()
     {
         var state = EntityManager.GetComponentData<EffectsData>(SystemHandle);
-
+        
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
         
         new CalculateEffectsJob
@@ -38,16 +38,16 @@ public partial class EffectSystem : SystemBase
             ecb = ecb,
             maxStacksMap = state.MaxStacksMap
         }.Run();
-
+        
         ecb.Playback(EntityManager);
-
+        
         ecb = new EntityCommandBuffer(Allocator.TempJob);
-
+        
         new ApplyFireEffectJob
         {
             entityCommandBuffer = ecb
         }.Run();
-
+        
         ecb.Playback(EntityManager);
     }
     

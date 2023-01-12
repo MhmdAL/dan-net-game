@@ -56,7 +56,7 @@ public class GameSceneMenu : MonoBehaviour
 
     private void Start()
     {
-        Invoke("Init", .5f);
+        Invoke("Init", 1f);
 
         heroSpeedInput.onEndEdit.AddListener(x => UpdateStats());
         heroHealthInput.onEndEdit.AddListener(x => UpdateStats());

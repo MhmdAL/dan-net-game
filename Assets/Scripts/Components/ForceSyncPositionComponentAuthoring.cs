@@ -7,7 +7,7 @@ using Unity.NetCode;
 
 public struct ForceSyncPositionComponent : IComponentData, IEnableableComponent
 {
-    [GhostField(Quantization = 1000)] public float2 Position;
+    [GhostField(Quantization = 10)] public float2 Position;
     [GhostField(Smoothing = SmoothingAction.Clamp)] public byte CurrentWaypoint;
 }
 

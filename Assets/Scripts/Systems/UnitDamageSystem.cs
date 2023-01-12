@@ -19,6 +19,6 @@ public partial class UnitDamageSystem : SystemBase
             }
             
             damageBuffer.Clear();
-        }).Run();
+        }).Schedule();
     }
 }

@@ -13,7 +13,7 @@ public struct GridPositioningGlobalData : IComponentData
 }
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-[UpdateAfter(typeof(MoveZombiesSystem))]
+[UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class GridPositioningSystem : SystemBase
 {
     protected override void OnCreate()
@@ -54,26 +54,26 @@ public partial class GridPositioningSystem : SystemBase
     protected override void OnUpdate()
     {
         var state = EntityManager.GetComponentData<GridPositioningGlobalData>(SystemHandle);
-
+        
         state.CellEntitiesHashMap.Clear();
-
+        
         var query = GetEntityQuery(typeof(Translation), typeof(GridPositionComponent));
-
+        
         var entityCount = query.CalculateEntityCount();
-
+        
         if (entityCount > state.CellEntitiesHashMap.Capacity)
         {
             state.CellEntitiesHashMap.Capacity = entityCount + 10;
         }
-
-        new SetGridPositionsJob { CellEntitiesHashMap = state.CellEntitiesHashMap }.Schedule();
+        
+        Dependency = new SetGridPositionsJob { CellEntitiesHashMap = state.CellEntitiesHashMap.AsParallelWriter() }.ScheduleParallel(Dependency);
     }
 }
 
 [BurstCompile]
 public partial struct SetGridPositionsJob : IJobEntity
 {
-    public NativeMultiHashMap<int2, CellEntity> CellEntitiesHashMap;
+    public NativeMultiHashMap<int2, CellEntity>.ParallelWriter CellEntitiesHashMap;
 
     private void Execute(Entity ent, ref GridPositionComponent gridPos, in Translation trans)
     {

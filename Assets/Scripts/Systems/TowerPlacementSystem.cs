@@ -18,16 +18,16 @@ public partial class TowerPlacementSystem : SystemBase
     protected override void OnUpdate()
     {
         var towerSpawner = SystemAPI.GetSingleton<TowerSpawnerComponent>();
-
+        
         var ecb = new EntityCommandBuffer(Unity.Collections.Allocator.TempJob);
-
+        
         new ReceivePlaceTowerCommandJob
         {
             ecb = ecb,
             fireTowerPrefab = towerSpawner.FireTowerPrefab,
             slowTowerPrefab = towerSpawner.SlowTowerPrefab
         }.Run();
-
+        
         ecb.Playback(EntityManager);
         ecb.Dispose();
     }

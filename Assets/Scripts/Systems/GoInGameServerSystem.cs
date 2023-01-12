@@ -13,6 +13,18 @@ public struct SynSystemData : IComponentData
     public float Timer;
 }
 
+public struct ZombieSyncData
+{
+    public Entity Entity;
+    public float2 Position;
+    public byte CurrentWaypoint;
+}
+
+// public struct SyncZombiesCommand : IRpcCommand
+// {
+//     public ZombieSyncData[] SyncData;
+// }
+
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateBefore(typeof(GoInGameServerSystem))]
 public partial class SynSystem : SystemBase
@@ -42,6 +54,8 @@ public partial class SynSystem : SystemBase
         {
             var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
+            var zombieSyncDatas = new NativeList<ZombieSyncData>(0, Allocator.Temp);
+
             var fpLookup = GetComponentLookup<FollowPathComponent>();
 
             foreach (var (tag, trans, ent) in SystemAPI.Query<ZombieTag, Translation>().WithEntityAccess())
@@ -53,13 +67,28 @@ public partial class SynSystem : SystemBase
                 {
                     newSync.CurrentWaypoint = fp.CurrentWaypoint;
                 }
+                
+                // zombieSyncDatas.Add(new ZombieSyncData()
+                // {
+                //     Entity = ent,
+                //     Position = newSync.Position,
+                //     CurrentWaypoint = newSync.CurrentWaypoint
+                // });
 
                 // Debug.Log("Forcing sync on: " + ent);
                 
-                commandBuffer.SetComponent(ent, newSync);
                 commandBuffer.SetComponentEnabled<ForceSyncPositionComponent>(ent, true);
+                commandBuffer.SetComponent(ent, newSync);
             }
-        
+
+            // var test = new ZombieSyncData[1];
+            // test[0] = zombieSyncDatas[0];
+            //
+            // var req = EntityManager.CreateEntity(typeof(SendRpcCommandRequestComponent), typeof(SyncZombiesCommand));
+            // EntityManager.SetComponentData(req, new SyncZombiesCommand { SyncData = test});
+            //
+            // Debug.Log($"Trying to sync {zombieSyncDatas.Length} zombies");
+            
             commandBuffer.Playback(EntityManager);
 
             state.Active = false;
@@ -122,7 +151,7 @@ public partial struct GoInGameServerSystem : ISystem
         var syncSystemData = state.EntityManager.GetComponentData<SynSystemData>(state.World.GetExistingSystem(typeof(SynSystem)));
 
         syncSystemData.Active = true;
-        syncSystemData.Timer = 1f;
+        syncSystemData.Timer = 2f;
         
         state.EntityManager.SetComponentData<SynSystemData>(state.World.GetExistingSystem(typeof(SynSystem)), syncSystemData);
 
@@ -130,3 +159,36 @@ public partial struct GoInGameServerSystem : ISystem
     }
 }
 
+// [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+// public partial class SyncZombiesSystem : SystemBase
+// {
+//     protected override void OnUpdate()
+//     {
+//         var ecb = new EntityCommandBuffer(Allocator.TempJob);
+//         
+//         new ReceiveSyncZombiesCommandJob
+//         {
+//             ecb = ecb
+//         }.Run();
+//         
+//         ecb.Playback(EntityManager);
+//     }
+// }
+//
+// public partial struct ReceiveSyncZombiesCommandJob : IJobEntity
+// {
+//     public EntityCommandBuffer ecb;
+//
+//     public void Execute(Entity ent, ref SyncZombiesCommand command, ref ReceiveRpcCommandRequestComponent req)
+//     {
+//         ecb.DestroyEntity(ent);
+//
+//         for (int i = 0; i < command.SyncData.Length; i++)
+//         {
+//             ecb.SetComponent(command.SyncData[i].Entity, new Translation {Value = new float3(command.SyncData[i].Position, 0) });
+//             ecb.SetComponent(command.SyncData[i].Entity, new FollowPathComponent { CurrentWaypoint = command.SyncData[i].CurrentWaypoint });
+//         }
+//         
+//         Debug.Log($"Synced {command.SyncData.Length} zombies");
+//     }
+// }

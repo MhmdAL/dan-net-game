@@ -10,16 +10,14 @@ public partial class UnitDeathSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        
-        Entities.ForEach((Entity ent, in HealthComponent healthComp) =>
+        Entities
+            .WithDeferredPlaybackSystem<EndSimulationEntityCommandBufferSystem>()
+            .ForEach((Entity ent, EntityCommandBuffer ecb, in HealthComponent healthComp) =>
         {
             if (healthComp.CurrentHealth <= 0)
             {
-                commandBuffer.DestroyEntity(ent);
+                ecb.DestroyEntity(ent);
             }
-        }).Run();
-        
-        commandBuffer.Playback(EntityManager);
+        }).Schedule();
     }
 }

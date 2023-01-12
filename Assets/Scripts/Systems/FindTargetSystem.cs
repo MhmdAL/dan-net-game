@@ -88,26 +88,26 @@ public partial class FindTargetSystem : SystemBase
         var cellEntitiesMap = EntityManager
             .GetComponentData<GridPositioningGlobalData>(World.GetExistingSystem<GridPositioningSystem>())
             .CellEntitiesHashMap;
-
+        
         // var random = new Unity.Mathematics.Random((uint)Random.Range(1, 1000000));
         var random = new Unity.Mathematics.Random(1000);
-
+        
         var gridPosLookup = GetComponentLookup<GridPositionComponent>(true);
         var translationLookup = GetComponentLookup<Translation>(true);
-
-        new UnitFindTargetJob
+        
+        Dependency = new UnitFindTargetJob
         {
             GridPosLookup = gridPosLookup,
             CellEntitiesMap = cellEntitiesMap,
             Random = random
-        }.Schedule();
-
-        new TowerFindTargetJob
+        }.Schedule(Dependency);
+        
+        Dependency = new TowerFindTargetJob
         {
             TranslationLookup = translationLookup,
             CellEntitiesMap = cellEntitiesMap,
             Random = random
-        }.Schedule();
+        }.Schedule(Dependency);
     }
     
     [BurstCompile]

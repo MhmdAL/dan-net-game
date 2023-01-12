@@ -143,7 +143,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DefaultGhostMode: 0
   SupportedGhostModes: 1
-  OptimizationMode: 0
+  OptimizationMode: 1
   Importance: 1
   prefabId: dfcba42fe7342cb4bb77b04aaf128ef5
   HasOwner: 0
@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b19258f0e8e34f48b0d20eb296e94b94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Duration: 200
+  Duration: 3
   MinDamage: 2
   MaxDamage: 10
   Rate: 2

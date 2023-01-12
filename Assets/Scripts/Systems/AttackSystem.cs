@@ -13,16 +13,14 @@ public partial class AttackSystem : SystemBase
 {
     protected override void OnUpdate()
     {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
-
         var damageBufferLookup = GetBufferLookup<DamageBuffer>();
         var effectBufferLookup = GetBufferLookup<EffectBufferComponent>();
         var modBufferLookup = GetBufferLookup<ModifierBufferComponent>();
-
+        
         // var random = new Random((uint)UnityEngine.Random.Range(1, 1000000));
         var random = new Random(1000);
-
-        Entities
+        
+        Dependency = Entities
             .WithAll<PerformAttack>()
             .ForEach((Entity ent, in AttackData attackData, in AttackTargetData attackTarget) =>
             {
@@ -30,9 +28,9 @@ public partial class AttackSystem : SystemBase
                 {
                     damageBuffer.Add(new DamageBuffer { Value = attackData.Damage });
                 }
-            }).Run();
+            }).Schedule(Dependency);
         
-        Entities
+        Dependency = Entities
             .WithAll<PerformAttack>()
             .ForEach((Entity ent, in AttackTargetData attackTarget, in ApplyFireEffectOnAttack fireEffect) =>
             {
@@ -50,9 +48,9 @@ public partial class AttackSystem : SystemBase
                         SourceId = ent.Index,
                     });
                 }
-            }).Run();
+            }).Schedule(Dependency);
         
-        Entities
+        Dependency = Entities
             .WithAll<PerformAttack>()
             .ForEach((Entity ent, in AttackTargetData attackTarget, in ApplySlowOnAttack slowMod) =>
             {
@@ -68,16 +66,22 @@ public partial class AttackSystem : SystemBase
                         SourceId = ent.Index,
                     });
                 }
-            }).Run();
+            }).Schedule(Dependency);
         
-        Entities
+        // var ecb = new EntityCommandBuffer(Allocator.TempJob);
+        // var ecbP = ecb.AsParallelWriter();
+        
+        Dependency = Entities
+            .WithDeferredPlaybackSystem<EndSimulationEntityCommandBufferSystem>()
             .WithAll<PerformAttack>()
-            .ForEach((Entity ent) =>
+            .ForEach((Entity ent, EntityCommandBuffer ecbP, int entityInQueryIndex) =>
             {
-                ecb.RemoveComponent<PerformAttack>(ent);
-            }).Run();
+                ecbP.RemoveComponent<PerformAttack>(ent);
+            }).ScheduleParallel(Dependency);
         
-        ecb.Playback(EntityManager);
+        // Dependency.Complete();
+        
+        // ecb.Playback(EntityManager);
     }
 }
 

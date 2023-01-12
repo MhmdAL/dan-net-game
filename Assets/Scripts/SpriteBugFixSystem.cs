@@ -26,11 +26,11 @@ public partial class SpriteBugFixSystem : SystemBase
         // EntityManager.RemoveComponent(_players, typeof(CompanionLink));
         // EntityManager.RemoveComponent<SpriteRenderer>(_sprites);
 
-        Entities
-            .WithAll<ZombieTag>()
-            .ForEach((SpriteRenderer sr) =>
-            {
-                sr.color = Color.black;
-            }).WithoutBurst().Run();
+        // Entities
+        //     .WithAll<ZombieTag>()
+        //     .ForEach((SpriteRenderer sr) =>
+        //     {
+        //         sr.color = Color.black;
+        //     }).WithoutBurst().Run();
     }
 }
